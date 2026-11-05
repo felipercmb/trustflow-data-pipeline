@@ -1,0 +1,31 @@
+name: Synthetic demo
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  demo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Generate synthetic events
+        run: python -m trustflow generate-demo --output data/demo
+      - name: Ingest daily partitions
+        run: python -m trustflow ingest data/demo
+      - name: Verify idempotent replay
+        run: |
+          python -m trustflow ingest data/demo > replay.json
+          python -c 'import json; r=json.load(open("replay.json")); assert r["inserted_rows"] == 0 and r["duplicate_rows"] > 0'
+      - name: Export cohort metrics
+        run: python -m trustflow report --as-of 2025-01-16T00:00:00Z --output reports/demo
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trustflow-synthetic-report
+          path: reports/demo/
+          retention-days: 7
