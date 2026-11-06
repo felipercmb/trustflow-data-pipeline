@@ -2,11 +2,28 @@
 
 ## Grão, janela e população
 
-Um evento tem grão `event_id`. Um fluxo tem grão `workflow_id`. A coorte reúne fluxos pela data UTC de `requested_at`, com filtro opcional de canal.
+Um evento tem grão `event_id`. Um fluxo tem grão `workflow_id`. A coorte reúne fluxos pela data UTC de `requested_at`, com filtros opcionais de canal e tipo de documento.
 
-O relatório considera apenas eventos com `occurred_at <= as_of` antes de reconstruir os fluxos. O corte é inclusivo. Dados com tempo futuro não vazam para a observação passada. Todos os dados **já ingeridos** podem participar, inclusive eventos atrasados. Portanto, o relatório representa tempo de evento, não uma reprodução do que era conhecido no instante original.
+O relatório considera apenas eventos com `occurred_at <= as_of` antes de reconstruir os fluxos. O corte é inclusivo. Sem `known_at`, todos os fatos já ingeridos participam, inclusive eventos atrasados. Com `known_at`, o lote de primeira aceitação também deve ter `finished_at <= known_at`.
 
-Os contadores de lotes em `quality.batches_by_status_current` representam o estado atual da ingestão. Eles não são filtrados por `as_of` nem por canal; os demais indicadores são filtrados. Reexecutar um lote aumenta o histórico de auditoria, sem aumentar eventos ou indicadores de negócio.
+Exemplo: uma assinatura ocorreu às 10h e só chegou às 12h. Com `as_of=11h` e sem `known_at`, ela aparece após a carga das 12h. Com `as_of=11h` e `known_at=11h`, permanece fora do relatório. Uma retransmissão idêntica não altera o lote original do evento. `finished_at` é registrado pelo relógio da aplicação imediatamente antes do commit; não é timestamp externo de certificação e depende da correção desse relógio.
+
+Os contadores de lotes em `quality.batches_by_status_current` representam o estado atual da ingestão. Não são filtrados por `as_of`, `known_at`, canal ou documento. Portanto, um relatório histórico completo pode ter novos contadores de auditoria, enquanto suas métricas e fingerprint de eventos permanecem iguais. `source_event_count` conta eventos selecionados; `event_snapshot_sha256` identifica pares ordenados de `event_id` e hash canônico, sem incluir metadados de tentativa.
+
+## Segmentos e idade das pendências
+
+`segments` agrupa a mesma população por canal e tipo de documento, com contagens de estados, elegibilidade de SLA e tempo médio de assinaturas concluídas. Suas contagens somam os totais globais. Não confunda tempo médio de conclusões com idade das pendências.
+
+`backlog` contém apenas fluxos com solicitação e sem terminal observado. A idade é `as_of - requested_at`; as faixas são disjuntas, com limite inferior inclusivo:
+
+| Faixa | Idade |
+|---|---|
+| `within_sla` | menor que 1 × SLA |
+| `one_to_four_sla` | de 1 × SLA até menos de 4 × SLA |
+| `four_to_twenty_four_sla` | de 4 × SLA até menos de 24 × SLA |
+| `over_twenty_four_sla` | maior ou igual a 24 × SLA |
+
+Faixas vazias não são exportadas. A soma de `pending_count` das faixas coincide com a quantidade total de pendências. `oldest_age_seconds` permite priorizar a fila mais antiga sem revelar identidade ou conteúdo de documentos.
 
 ## Estados
 

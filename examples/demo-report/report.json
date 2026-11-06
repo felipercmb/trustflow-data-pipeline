@@ -1,6 +1,11 @@
 {
+  "report_version": 2,
   "dataset_kind": "synthetic",
   "as_of": "2025-01-16T00:00:00.000000+00:00",
+  "known_at": null,
+  "document_type": null,
+  "source_event_count": 441,
+  "event_snapshot_sha256": "92f30a65b8c5620781768c2c9b55d80c23670ebd6864bca31e6b77017c5ede27",
   "sla_seconds": 3600,
   "channel": null,
   "totals": {
@@ -227,6 +232,141 @@
       "p95_signed_seconds": 7642.0
     }
   ],
+  "segments": [
+    {
+      "channel": "api",
+      "document_type": "authorization",
+      "requested_count": 28,
+      "signed_count": 14,
+      "failed_count": 8,
+      "canceled_count": 1,
+      "expired_count": 1,
+      "pending_count": 4,
+      "overdue_pending_count": 4,
+      "sla_due_count": 28,
+      "sla_met_count": 3,
+      "avg_signed_seconds": 5604.21
+    },
+    {
+      "channel": "api",
+      "document_type": "contract",
+      "requested_count": 29,
+      "signed_count": 10,
+      "failed_count": 7,
+      "canceled_count": 2,
+      "expired_count": 3,
+      "pending_count": 7,
+      "overdue_pending_count": 7,
+      "sla_due_count": 29,
+      "sla_met_count": 2,
+      "avg_signed_seconds": 6064.8
+    },
+    {
+      "channel": "api",
+      "document_type": "service_order",
+      "requested_count": 34,
+      "signed_count": 24,
+      "failed_count": 2,
+      "canceled_count": 1,
+      "expired_count": 2,
+      "pending_count": 5,
+      "overdue_pending_count": 5,
+      "sla_due_count": 34,
+      "sla_met_count": 7,
+      "avg_signed_seconds": 5256.25
+    },
+    {
+      "channel": "mobile",
+      "document_type": "authorization",
+      "requested_count": 27,
+      "signed_count": 13,
+      "failed_count": 5,
+      "canceled_count": 1,
+      "expired_count": 1,
+      "pending_count": 7,
+      "overdue_pending_count": 7,
+      "sla_due_count": 27,
+      "sla_met_count": 3,
+      "avg_signed_seconds": 6541.46
+    },
+    {
+      "channel": "mobile",
+      "document_type": "contract",
+      "requested_count": 33,
+      "signed_count": 16,
+      "failed_count": 4,
+      "canceled_count": 1,
+      "expired_count": 2,
+      "pending_count": 10,
+      "overdue_pending_count": 10,
+      "sla_due_count": 33,
+      "sla_met_count": 3,
+      "avg_signed_seconds": 5580.69
+    },
+    {
+      "channel": "mobile",
+      "document_type": "service_order",
+      "requested_count": 15,
+      "signed_count": 14,
+      "failed_count": 1,
+      "canceled_count": 0,
+      "expired_count": 0,
+      "pending_count": 0,
+      "overdue_pending_count": 0,
+      "sla_due_count": 15,
+      "sla_met_count": 3,
+      "avg_signed_seconds": 5748.07
+    },
+    {
+      "channel": "web",
+      "document_type": "authorization",
+      "requested_count": 21,
+      "signed_count": 14,
+      "failed_count": 3,
+      "canceled_count": 1,
+      "expired_count": 1,
+      "pending_count": 2,
+      "overdue_pending_count": 2,
+      "sla_due_count": 21,
+      "sla_met_count": 5,
+      "avg_signed_seconds": 4582.86
+    },
+    {
+      "channel": "web",
+      "document_type": "contract",
+      "requested_count": 25,
+      "signed_count": 16,
+      "failed_count": 6,
+      "canceled_count": 0,
+      "expired_count": 1,
+      "pending_count": 2,
+      "overdue_pending_count": 2,
+      "sla_due_count": 25,
+      "sla_met_count": 6,
+      "avg_signed_seconds": 5454.88
+    },
+    {
+      "channel": "web",
+      "document_type": "service_order",
+      "requested_count": 28,
+      "signed_count": 18,
+      "failed_count": 6,
+      "canceled_count": 1,
+      "expired_count": 1,
+      "pending_count": 2,
+      "overdue_pending_count": 2,
+      "sla_due_count": 28,
+      "sla_met_count": 9,
+      "avg_signed_seconds": 4324.89
+    }
+  ],
+  "backlog": [
+    {
+      "bucket": "over_twenty_four_sla",
+      "pending_count": 39,
+      "oldest_age_seconds": 1146726.0
+    }
+  ],
   "failure_events_by_code": [
     {
       "failure_code": "INVALID_DOCUMENT",
@@ -247,5 +387,5 @@
       "accepted": 15
     }
   },
-  "semantics": "Event-time snapshot using all data currently ingested; late data can revise past reports."
+  "semantics": "Event-time snapshot; known_at optionally limits first accepted ingestion time. Audit counters reflect current warehouse state."
 }

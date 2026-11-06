@@ -1,0 +1,33 @@
+{
+  "dataset_kind": "synthetic",
+  "trustflow_version": "0.2.0",
+  "measured_at": "2026-11-06T00:25:42.572908+00:00",
+  "python": "3.14.6",
+  "sqlite": "3.53.3",
+  "os": "Darwin",
+  "architecture": "arm64",
+  "workflows": 10000,
+  "events": 17992,
+  "partitions": 15,
+  "median_ingestion_seconds": 0.404647,
+  "median_report_seconds": 0.054753,
+  "identical_fact_snapshots": true,
+  "trials": [
+    {
+      "ingestion_seconds": 0.408269,
+      "report_seconds": 0.068235,
+      "event_snapshot_sha256": "24dc22eeb6b5c92698d7c958038e43e95d38db0f86b11605ec990cb0836cf5f3"
+    },
+    {
+      "ingestion_seconds": 0.404647,
+      "report_seconds": 0.054753,
+      "event_snapshot_sha256": "24dc22eeb6b5c92698d7c958038e43e95d38db0f86b11605ec990cb0836cf5f3"
+    },
+    {
+      "ingestion_seconds": 0.40183,
+      "report_seconds": 0.053973,
+      "event_snapshot_sha256": "24dc22eeb6b5c92698d7c958038e43e95d38db0f86b11605ec990cb0836cf5f3"
+    }
+  ],
+  "limitations": "Local filesystem and synthetic data; excludes generation, audit, network, and export. No production throughput claim."
+}

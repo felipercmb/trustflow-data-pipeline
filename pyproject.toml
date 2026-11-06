@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "trustflow-data-pipeline"
-version = "0.1.0"
+version = "0.2.0"
 description = "Auditable Python and SQL pipeline for digital-signature workflow events"
 readme = "README.md"
 requires-python = ">=3.11"

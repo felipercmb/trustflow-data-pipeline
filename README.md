@@ -11,6 +11,8 @@ Um fluxo de assinatura começou, falhou, ficou pendente ou foi concluído? Quant
 
 **Projeto independente de portfólio.** Todos os eventos e resultados demonstrados são **sintéticos**, gerados por código. Não há dados de clientes, integração com a Soluti, vínculo comercial ou alegação de resultados reais.
 
+**Versão 0.2:** carga com staging SQL, retomada incremental, auditoria de integridade, reconstrução verificada, snapshots por tempo de conhecimento, backlog por idade e políticas de qualidade. Veja os [ciclos de revisão](docs/evolucao-v02.md) e o [changelog](CHANGELOG.md).
+
 ## Por que este domínio?
 
 O [portfólio público da Soluti](https://soluti.com.br/) inclui identidade digital, certificados e a plataforma IntelliSign para assinaturas e gestão de documentos. O projeto explora uma necessidade plausível desse setor: transformar eventos operacionais em visibilidade sobre tempo de conclusão, falhas e filas de atendimento. Essa é uma hipótese de aplicação, não uma descrição dos sistemas internos da empresa.
@@ -42,6 +44,11 @@ Arquivos produzidos:
 | `data/local/quarantine/` | Motivo da rejeição e referência ao arquivo original |
 | `reports/demo/report.json` | Indicadores, contexto e qualidade |
 | `reports/demo/cohorts.csv` | Indicadores por data de solicitação, prontos para BI |
+| `reports/demo/segments.csv` | Indicadores por canal e tipo de documento |
+| `reports/demo/backlog.csv` | Pendências por faixa de idade em relação ao SLA |
+| `reports/demo/manifest.json` | Hashes dos arquivos exportados |
+
+As saídas são publicadas como um conjunto completo. Uma pasta existente só é aceita se o conteúdo for idêntico; para outro relatório, escolha outro `--output`. Isso preserva evidências anteriores.
 
 ## Uma demonstração verificável
 
@@ -77,6 +84,10 @@ flowchart LR
 - **Eventos atrasados:** um evento terminal pode chegar antes da solicitação. Fica visível como `awaiting_request` até a reconciliação.
 - **Tempo de evento:** relatórios usam `--as-of`, evitando que um resultado futuro apareça numa observação passada.
 - **Observabilidade:** logs JSON, contadores de linhas, estados dos lotes e diagnóstico de rejeição sem repetir valores recebidos.
+- **Carga em lote:** staging temporário, detecção de conflitos e validação dos fluxos com consultas em conjunto.
+- **Recuperação verificável:** `audit` confere bruto, fatos e contabilidade; `rebuild` seleciona lotes aceitos e compara o fingerprint dos fatos antes de publicar o novo banco.
+- **Tempo de conhecimento:** `--known-at` limita a primeira aceitação registrada, para analisar o que estava disponível antes de eventos atrasados.
+- **Políticas explícitas:** `check` avalia limites TOML e devolve exit code 3 quando uma regra falha.
 
 O [desenho técnico](docs/arquitetura.md) explica os limites de concorrência, armazenamento e evolução.
 
@@ -104,15 +115,40 @@ python3 -m trustflow ingest data/demo
 python3 -m trustflow ingest data/demo --data-dir data/sla-30m --sla-seconds 1800
 ```
 
+## Operação e verificações
+
+```bash
+# Retomar uma pasta sem criar novas tentativas para arquivos já aceitos
+python3 -m trustflow ingest data/demo --skip-accepted
+
+# Verificar hashes, linhagem, contadores e consistência dos fluxos
+python3 -m trustflow audit
+
+# Avaliar a política estrutural da demonstração
+python3 -m trustflow check --as-of 2025-01-16T00:00:00Z --policy policies/demo-quality.toml
+
+# Reconstruir fatos aceitos em um destino novo, sem carregar lotes rejeitados
+python3 -m trustflow rebuild --destination data/rebuilt
+
+# Verificar o conjunto de arquivos exportados
+python3 -m trustflow verify-export reports/demo
+```
+
+A política [illustrative-service.toml](policies/illustrative-service.toml) exige 95% de SLA e zero pendências vencidas. **Ela deve falhar na amostra**, para demonstrar o diagnóstico. Seus limites são didáticos e não pertencem a uma empresa.
+
+Relatórios também aceitam `--document-type contract` e `--known-at <timestamp-com-fuso>`. O segundo parâmetro usa datas reais da ingestão local; escolher uma data anterior à primeira carga produz uma população vazia, mesmo que os eventos sintéticos tenham datas de 2025. [Semântica e exemplos](docs/metricas.md).
+
 ## Testes e automação
 
 ```bash
 python3 -m unittest discover -s tests -v
 ```
 
-Os testes cobrem contrato, fusos, precisão do prazo, duplicatas, conflitos, rollback, integridade do bruto, eventos atrasados, métricas conhecidas e a jornada completa offline. A CI executa a suíte em Python 3.11, 3.12, 3.13 e 3.14 e verifica a instalação do pacote.
+Os testes cobrem contrato, fusos, precisão do prazo, duplicatas, conflitos concorrentes, rollback, integridade, recuperação, eventos atrasados, snapshots históricos, políticas e publicação atômica de relatórios. A CI executa a suíte em Python 3.11, 3.12, 3.13 e 3.14 e verifica a instalação do pacote fora do checkout.
 
-Em **Actions → Synthetic demo → Run workflow**, a automação gera eventos, carrega, verifica o replay e exporta relatórios como artefatos com retenção de sete dias. Ela é manual e não consulta sistemas externos. Não há job de produção agendado.
+Em **Actions → Synthetic demo → Run workflow**, a automação gera eventos, carrega, verifica replay e retomada incremental, audita, aplica a política, reconstrói e exporta relatórios com manifestos. Os artefatos ficam disponíveis por sete dias. Ela é manual e não consulta sistemas externos. Não há job de produção agendado.
+
+Para medir o cenário local, execute `python3 -m benchmarks.run --workflows 10000 --trials 3`. A saída informa ambiente, tempos e fingerprint de cada rodada. A medição usa dados sintéticos e não representa capacidade de produção.
 
 Instalação opcional do comando `trustflow` em ambiente virtual:
 
@@ -133,6 +169,9 @@ O empacotamento pode baixar o backend `setuptools`; isso não é necessário par
 | [storage.py](trustflow/storage.py) | Bronze imutável e conexão analítica |
 | [cohort_metrics.sql](trustflow/sql/cohort_metrics.sql) | Indicadores por coorte e percentil |
 | [report.py](trustflow/report.py) | Consulta consistente e exportação |
+| [audit.py](trustflow/audit.py) / [recovery.py](trustflow/recovery.py) | Integridade e reconstrução verificada |
+| [quality.py](trustflow/quality.py) | Políticas e diagnóstico de regras |
+| [export.py](trustflow/export.py) | Publicação completa e verificação de arquivos |
 | [demo.py](trustflow/demo.py) | Geração sintética reproduzível |
 | [tests/](tests/) | Casos unitários e de integração |
 | [Operação](docs/operacao.md) | Replay, rejeições e recuperação |

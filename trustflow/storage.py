@@ -20,25 +20,48 @@ def connect(root: Path, dataset_kind: str, sla_seconds: int) -> sqlite3.Connecti
     if (
         dataset_kind not in {"synthetic", "operational"}
         or type(sla_seconds) is not int
-        or sla_seconds < 1
+        or not 1 <= sla_seconds <= 31_536_000
     ):
         raise PipelineError("INVALID_CONFIG", "Invalid dataset kind or SLA seconds.")
     root.mkdir(parents=True, exist_ok=True)
     db = sqlite3.connect(root / "warehouse.sqlite", timeout=30)
     db.row_factory = sqlite3.Row
-    db.executescript(sql_text("schema.sql"))
-    with db:
-        db.execute(
-            "INSERT OR IGNORE INTO settings VALUES (1, 1, ?, ?)",
-            (dataset_kind, sla_seconds),
-        )
-    config = db.execute("SELECT dataset_kind, sla_seconds FROM settings").fetchone()
-    if tuple(config) != (dataset_kind, sla_seconds):
+    try:
+        db.executescript(sql_text("schema.sql"))
+        with db:
+            db.execute(
+                "INSERT OR IGNORE INTO settings VALUES (1, 1, ?, ?)", (dataset_kind, sla_seconds)
+            )
+        config = db.execute(
+            "SELECT schema_version, dataset_kind, sla_seconds FROM settings WHERE singleton=1"
+        ).fetchone()
+        if config is None or config["schema_version"] != 1:
+            raise PipelineError("WAREHOUSE_VERSION", "Unsupported warehouse schema version.")
+        if (config["dataset_kind"], config["sla_seconds"]) != (dataset_kind, sla_seconds):
+            raise PipelineError(
+                "CONFIG_MISMATCH", "Use the dataset kind and SLA configured for this warehouse."
+            )
+    except Exception:
         db.close()
-        raise PipelineError(
-            "CONFIG_MISMATCH",
-            "Use the dataset kind and SLA configured for this warehouse.",
-        )
+        raise
+    return db
+
+
+def readonly(root: Path) -> sqlite3.Connection:
+    warehouse = root / "warehouse.sqlite"
+    if not warehouse.exists():
+        raise PipelineError("NO_WAREHOUSE", "Ingest a batch before opening this warehouse.")
+    db = sqlite3.connect(warehouse.resolve().as_uri() + "?mode=ro", uri=True, timeout=30)
+    db.row_factory = sqlite3.Row
+    try:
+        db.execute("PRAGMA temp_store=MEMORY")
+        db.execute("BEGIN")
+        config = db.execute("SELECT * FROM settings WHERE singleton=1").fetchone()
+        if config is None or config["schema_version"] != 1:
+            raise PipelineError("WAREHOUSE_VERSION", "Unsupported warehouse schema version.")
+    except Exception:
+        db.close()
+        raise
     return db
 
 

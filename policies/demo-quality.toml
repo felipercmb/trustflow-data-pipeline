@@ -1,0 +1,10 @@
+# Structural expectations for the deterministic SYNTHETIC demo only.
+[policy]
+version = 1
+dataset_kind = "synthetic"
+
+[rules]
+min_requested_count = 240
+max_orphan_workflows = 0
+max_rejected_batches = 0
+max_running_batches = 0

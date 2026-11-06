@@ -37,6 +37,8 @@ CREATE TABLE IF NOT EXISTS events (
 );
 CREATE INDEX IF NOT EXISTS idx_events_workflow ON events(workflow_id);
 CREATE INDEX IF NOT EXISTS idx_events_time ON events(occurred_at);
+CREATE INDEX IF NOT EXISTS idx_events_batch ON events(source_batch_id);
+CREATE INDEX IF NOT EXISTS idx_batches_raw_status ON batches(raw_sha256, status);
 
 CREATE VIEW IF NOT EXISTS workflow_lifecycle AS
 SELECT workflow_id, MIN(channel) AS channel, MIN(document_type) AS document_type,

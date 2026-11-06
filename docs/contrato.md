@@ -55,6 +55,8 @@ O SHA-256 do payload usa todos os campos validados, em JSON com chaves ordenadas
 
 Máximo de 10 MiB e 50 mil linhas por arquivo. O processamento é em memória por lote; particione grandes entradas. A coluna `schema_version` tem somente a versão 1. Não existe migração automática entre contratos.
 
+A versão 0.2 preserva o contrato v1 e a compatibilidade de leitura com bancos da 0.1. Novas cargas acrescentam índices, sem alterar fatos antigos. Para novos comandos de ingestão, o SLA deve ser inteiro entre 1 e 31.536.000 segundos. Esse limite operacional não representa uma regra do setor.
+
 Um warehouse novo pode ser configurado com `--dataset-kind operational`, mas **não existe conector operacional implementado**. Um adaptador futuro precisa de autorização de acesso, mapeamento explícito do contrato e origem verificável. Dados sintéticos e operacionais nunca compartilham o mesmo warehouse.
 
 O contrato não contém nome, CPF, CNPJ, e-mail, telefone, documento assinado, biometria, token ou chave privada. Não forneça esses dados: a camada bronze preserva o arquivo recebido antes da validação, inclusive se ele for rejeitado. As mensagens de erro evitam ecoar valores, mas isso não transforma a aplicação em um mecanismo de anonimização.

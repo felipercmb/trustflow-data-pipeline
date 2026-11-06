@@ -1,0 +1,10 @@
+# Deliberately stricter than the synthetic scenario. Expected to FAIL (exit 3).
+# These are teaching thresholds, not a Soluti SLA or a production policy.
+[policy]
+version = 1
+dataset_kind = "synthetic"
+
+[rules]
+min_sla_due_count = 1
+min_sla_met_pct = 95.0
+max_overdue_pending_count = 0

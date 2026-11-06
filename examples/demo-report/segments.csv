@@ -1,0 +1,10 @@
+channel,document_type,requested_count,signed_count,failed_count,canceled_count,expired_count,pending_count,overdue_pending_count,sla_due_count,sla_met_count,avg_signed_seconds
+api,authorization,28,14,8,1,1,4,4,28,3,5604.21
+api,contract,29,10,7,2,3,7,7,29,2,6064.8
+api,service_order,34,24,2,1,2,5,5,34,7,5256.25
+mobile,authorization,27,13,5,1,1,7,7,27,3,6541.46
+mobile,contract,33,16,4,1,2,10,10,33,3,5580.69
+mobile,service_order,15,14,1,0,0,0,0,15,3,5748.07
+web,authorization,21,14,3,1,1,2,2,21,5,4582.86
+web,contract,25,16,6,0,1,2,2,25,6,5454.88
+web,service_order,28,18,6,1,1,2,2,28,9,4324.89

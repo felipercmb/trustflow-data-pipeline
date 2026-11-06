@@ -9,7 +9,7 @@ from uuid import uuid4
 
 from .contract import epoch_microseconds, event_hash, validate_event
 from .errors import PipelineError
-from .storage import connect, preserve_raw, read_bounded
+from .storage import connect, preserve_raw, read_bounded, sql_text
 
 MAX_ROWS = 50_000
 
@@ -39,37 +39,83 @@ def parse_batch(body: bytes, dataset_kind: str) -> list[dict]:
         try:
             payload = json.loads(line, object_pairs_hook=reject_duplicate_keys)
             events.append(validate_event(payload, dataset_kind))
-        except json.JSONDecodeError as exc:
+        except (json.JSONDecodeError, RecursionError, ValueError) as exc:
             raise PipelineError("INVALID_JSON", f"Line {index}: invalid JSON.") from exc
         except PipelineError as exc:
             raise PipelineError(exc.code, f"Line {index}: {exc}") from exc
     return events
 
 
-def validate_lifecycles(db: sqlite3.Connection, workflow_ids: set[str]) -> None:
-    for workflow_id in workflow_ids:
-        rows = db.execute("SELECT * FROM events WHERE workflow_id = ?", (workflow_id,)).fetchall()
-        requests = [row for row in rows if row["event_type"] == "requested"]
-        terminals = [row for row in rows if row["event_type"] != "requested"]
-        if len(requests) > 1 or len(terminals) > 1:
-            raise PipelineError(
-                "LIFECYCLE_CONFLICT",
-                "A workflow permits one request and at most one terminal event.",
+def load_staging(db: sqlite3.Connection, events: list[dict], batch_id: str) -> tuple[int, int]:
+    """Validate and insert a batch with set-based SQL, under the caller's transaction."""
+    db.execute("CREATE TEMP TABLE incoming AS SELECT * FROM events WHERE 0")
+    db.executemany(
+        "INSERT INTO incoming VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (
+            (
+                event["event_id"],
+                event["workflow_id"],
+                event["event_type"],
+                event["occurred_at"],
+                epoch_microseconds(event["occurred_at"]),
+                event["channel"],
+                event["document_type"],
+                event["failure_code"],
+                event_hash(event),
+                batch_id,
             )
-        if len({(row["channel"], row["document_type"]) for row in rows}) > 1:
-            raise PipelineError("DIMENSION_CONFLICT", "Workflow dimensions changed across events.")
-        if requests and terminals and terminals[0]["occurred_at"] < requests[0]["occurred_at"]:
-            raise PipelineError(
-                "TEMPORAL_ORDER", "Terminal event precedes its request in event time."
-            )
+            for event in events
+        ),
+    )
+    conflict = db.execute(
+        "SELECT 1 FROM incoming GROUP BY event_id HAVING COUNT(DISTINCT payload_sha256)>1 "
+        "UNION ALL SELECT 1 FROM incoming i JOIN events e USING(event_id) "
+        "WHERE i.payload_sha256 <> e.payload_sha256 LIMIT 1"
+    ).fetchone()
+    if conflict:
+        raise PipelineError(
+            "EVENT_ID_CONFLICT", "Existing event_id has a different canonical payload."
+        )
+    inserted = db.execute(
+        "INSERT INTO events SELECT DISTINCT i.* FROM incoming i "
+        "LEFT JOIN events e ON e.event_id=i.event_id WHERE e.event_id IS NULL"
+    ).rowcount
+    db.execute("CREATE TEMP TABLE affected_workflows AS SELECT DISTINCT workflow_id FROM incoming")
+    violation = db.execute(sql_text("lifecycle_checks.sql")).fetchone()
+    if violation:
+        raise PipelineError(
+            violation["error_code"], "Batch violates the workflow lifecycle contract."
+        )
+    return inserted, len(events) - inserted
 
 
 def ingest(
-    source: Path, root: Path, dataset_kind: str = "synthetic", sla_seconds: int = 3600
+    source: Path,
+    root: Path,
+    dataset_kind: str = "synthetic",
+    sla_seconds: int = 3600,
+    *,
+    skip_accepted: bool = False,
 ) -> dict:
     body = read_bounded(source)
     with closing(connect(root, dataset_kind, sla_seconds)) as db:
         digest, key = preserve_raw(root, body)
+        if skip_accepted:
+            prior = db.execute(
+                "SELECT batch_id FROM batches WHERE raw_sha256=? AND status='accepted' "
+                "ORDER BY finished_at, batch_id LIMIT 1",
+                (digest,),
+            ).fetchone()
+            if prior:
+                return {
+                    "batch_id": prior[0],
+                    "status": "skipped",
+                    "raw_sha256": digest,
+                    "raw_key": key,
+                    "input_rows": 0,
+                    "inserted_rows": 0,
+                    "duplicate_rows": 0,
+                }
         batch_id = str(uuid4())
         with db:
             db.execute(
@@ -83,37 +129,7 @@ def ingest(
             total = len(events)
             with db:
                 db.execute("BEGIN IMMEDIATE")
-                for event in events:
-                    digest_event = event_hash(event)
-                    existing = db.execute(
-                        "SELECT payload_sha256 FROM events WHERE event_id = ?",
-                        (event["event_id"],),
-                    ).fetchone()
-                    if existing:
-                        if existing[0] != digest_event:
-                            raise PipelineError(
-                                "EVENT_ID_CONFLICT",
-                                "Existing event_id has a different canonical payload.",
-                            )
-                        duplicates += 1
-                        continue
-                    db.execute(
-                        "INSERT INTO events VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                        (
-                            event["event_id"],
-                            event["workflow_id"],
-                            event["event_type"],
-                            event["occurred_at"],
-                            epoch_microseconds(event["occurred_at"]),
-                            event["channel"],
-                            event["document_type"],
-                            event["failure_code"],
-                            digest_event,
-                            batch_id,
-                        ),
-                    )
-                    inserted += 1
-                validate_lifecycles(db, {event["workflow_id"] for event in events})
+                inserted, duplicates = load_staging(db, events, batch_id)
                 db.execute(
                     "UPDATE batches SET status='accepted', finished_at=?, input_rows=?, inserted_rows=?, duplicate_rows=? WHERE batch_id=?",
                     (now_utc(), total, inserted, duplicates, batch_id),

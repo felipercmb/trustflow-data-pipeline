@@ -29,7 +29,10 @@ jobs:
         run: |
           trustflow generate-demo --count 10 --output installed-demo
           trustflow ingest installed-demo --data-dir installed-store
+          trustflow audit --data-dir installed-store
+          trustflow rebuild --data-dir installed-store --destination installed-rebuilt
           trustflow report --data-dir installed-store --as-of 2025-01-16T00:00:00Z --output installed-report
+          trustflow verify-export installed-report
 
   lint:
     runs-on: ubuntu-latest
@@ -39,5 +42,5 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install -r requirements-dev.txt
-      - run: ruff check trustflow tests
-      - run: ruff format --check trustflow tests
+      - run: ruff check trustflow tests benchmarks
+      - run: ruff format --check trustflow tests benchmarks

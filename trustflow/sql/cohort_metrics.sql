@@ -1,21 +1,10 @@
 -- Daily cohorts by requested_at (UTC), observed at :as_of.
 -- Filtering events BEFORE aggregation avoids future outcomes leaking into past reports.
-WITH observed AS (
-    SELECT * FROM events
-    WHERE occurred_at <= :as_of AND (:channel IS NULL OR channel = :channel)
-), lifecycle AS (
-    SELECT workflow_id,
-        MAX(CASE WHEN event_type = 'requested' THEN occurred_at END) AS requested_at,
-        MAX(CASE WHEN event_type <> 'requested' THEN occurred_at END) AS terminal_at,
-        MAX(CASE WHEN event_type = 'requested' THEN occurred_at_us END) AS requested_us,
-        MAX(CASE WHEN event_type <> 'requested' THEN occurred_at_us END) AS terminal_us,
-        MAX(CASE WHEN event_type <> 'requested' THEN event_type END) AS terminal_type
-    FROM observed GROUP BY workflow_id
-), durations AS (
+WITH durations AS (
     SELECT *, SUBSTR(requested_at, 1, 10) AS cohort_date,
         (terminal_us - requested_us) / 1000000.0 AS duration_seconds,
         requested_at <= :sla_cutoff AS is_due
-    FROM lifecycle WHERE requested_at IS NOT NULL
+    FROM snapshot_workflows WHERE requested_at IS NOT NULL
 ), ranked_signed AS (
     SELECT cohort_date, duration_seconds,
         ROW_NUMBER() OVER (PARTITION BY cohort_date ORDER BY duration_seconds, workflow_id) AS rank,

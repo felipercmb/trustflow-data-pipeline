@@ -1,0 +1,11 @@
+{
+  "manifest_version": 1,
+  "dataset_kind": "synthetic",
+  "event_snapshot_sha256": "92f30a65b8c5620781768c2c9b55d80c23670ebd6864bca31e6b77017c5ede27",
+  "files": {
+    "report.json": "f65659258ea2316a94d747246eaa2890a603c20e6b02063cf60fe505fee7f8ca",
+    "cohorts.csv": "69eae0a61d210c9e2842b67ad1de26f09081b639f6bf84f28c85ed9af1d95460",
+    "segments.csv": "4d715cbe186343b5273d235cfd6fb346191b7e033c45a5a4d72560dbfb603be1",
+    "backlog.csv": "33a7b8f8dd893c0ad1b4b3697bed60eae6f980cb616762b220e9e54dc59387ec"
+  }
+}

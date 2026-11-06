@@ -22,10 +22,35 @@ jobs:
         run: |
           python -m trustflow ingest data/demo > replay.json
           python -c 'import json; r=json.load(open("replay.json")); assert r["inserted_rows"] == 0 and r["duplicate_rows"] > 0'
+      - name: Verify incremental resume
+        run: |
+          python -m trustflow ingest data/demo --skip-accepted > resume.json
+          python -c 'import json; r=json.load(open("resume.json")); assert r["skipped_batches"] == 15 and r["inserted_rows"] == 0'
+      - name: Audit and apply structural policy
+        run: |
+          python -m trustflow audit
+          python -m trustflow check --as-of 2025-01-16T00:00:00Z --policy policies/demo-quality.toml
+      - name: Rebuild accepted facts
+        run: |
+          python -m trustflow rebuild --destination data/rebuilt
+          python -m trustflow audit --data-dir data/rebuilt
       - name: Export cohort metrics
-        run: python -m trustflow report --as-of 2025-01-16T00:00:00Z --output reports/demo
+        run: |
+          python -m trustflow report --as-of 2025-01-16T00:00:00Z --output reports/demo
+          python -m trustflow verify-export reports/demo
+      - name: Confirm stricter illustrative policy fails explicitly
+        run: |
+          python - <<'PY'
+          import json
+          import subprocess
+          from pathlib import Path
+          run = subprocess.run(['python', '-m', 'trustflow', 'check', '--as-of', '2025-01-16T00:00:00Z', '--policy', 'policies/illustrative-service.toml'], capture_output=True, text=True)
+          assert run.returncode == 3, run.stderr
+          assert json.loads(run.stdout)['status'] == 'failed'
+          Path('reports/illustrative-service-check.json').write_text(run.stdout)
+          PY
       - uses: actions/upload-artifact@v4
         with:
           name: trustflow-synthetic-report
-          path: reports/demo/
+          path: reports/
           retention-days: 7
