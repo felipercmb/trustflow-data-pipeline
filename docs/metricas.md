@@ -66,4 +66,4 @@ As taxas totais usam a soma dos numeradores dividida pela soma dos denominadores
 
 ## Como interpretar a demonstração
 
-No cenário de semente 42, existem 240 solicitações elegíveis e 41 assinadas no prazo de uma hora: 17,08%. O número é deliberadamente resultado de cenários de teste, não evidência de desempenho da Soluti ou de outro serviço. A utilidade é mostrar uma conta reproduzível, com denominador, janela e limitações explícitos.
+No cenário de semente 42, existem 240 solicitações elegíveis e 41 assinadas no prazo de uma hora: 17,08%. O número é deliberadamente resultado de cenários de teste, não evidência de desempenho de um serviço real. A utilidade é mostrar uma conta reproduzível, com denominador, janela e limitações explícitos.

@@ -9,15 +9,15 @@
 
 Um fluxo de assinatura começou, falhou, ficou pendente ou foi concluído? Quanto tempo levou? O prazo de atendimento foi cumprido? O TrustFlow transforma eventos de aplicações em indicadores auditáveis, preservando a origem de cada registro e permitindo repetir uma carga sem duplicar resultados.
 
-**Projeto independente de portfólio.** Todos os eventos e resultados demonstrados são **sintéticos**, gerados por código. Não há dados de clientes, integração com a Soluti, vínculo comercial ou alegação de resultados reais.
+**Projeto independente de portfólio.** Todos os eventos e resultados demonstrados são **sintéticos**, gerados por código. Não há dados de clientes, integração com serviços externos, vínculo comercial ou alegação de resultados reais.
 
 **Versão 0.2:** carga com staging SQL, retomada incremental, auditoria de integridade, reconstrução verificada, snapshots por tempo de conhecimento, backlog por idade e políticas de qualidade. Veja os [ciclos de revisão](docs/evolucao-v02.md) e o [changelog](CHANGELOG.md).
 
 ## Por que este domínio?
 
-O [portfólio público da Soluti](https://soluti.com.br/) inclui identidade digital, certificados e a plataforma IntelliSign para assinaturas e gestão de documentos. O projeto explora uma necessidade plausível desse setor: transformar eventos operacionais em visibilidade sobre tempo de conclusão, falhas e filas de atendimento. Essa é uma hipótese de aplicação, não uma descrição dos sistemas internos da empresa.
+Fluxos de assinatura digital permitem explorar um problema de engenharia de dados: transformar solicitações, conclusões, falhas e pendências em indicadores de tempo de atendimento e filas. O TrustFlow usa um modelo didático desses eventos para demonstrar como preservar a origem dos registros e produzir análises reproduzíveis.
 
-A proposta demonstra competências de engenharia de dados — Python, SQL, automação, modelagem, qualidade, rastreabilidade e testes — sem presumir a stack ou os requisitos completos de uma vaga. Veja [contexto, fontes e limites](docs/contexto-e-fontes.md).
+A proposta demonstra competências de engenharia de dados — Python, SQL, automação, modelagem, qualidade, rastreabilidade e testes — por meio de decisões técnicas verificáveis. Veja [contexto, fontes e limites](docs/contexto-e-fontes.md).
 
 ## Execute em três comandos
 

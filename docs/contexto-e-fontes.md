@@ -2,11 +2,11 @@
 
 ## Relação com o setor
 
-O site institucional da [Soluti](https://soluti.com.br/) apresenta certificados digitais, Bird ID e a IntelliSign, descrita como solução de assinaturas e gestão de documentos. Essa informação orienta o domínio do projeto: **observabilidade analítica de fluxos de assinatura**.
+O TrustFlow explora a **observabilidade analítica de fluxos de assinatura digital** por meio de um modelo didático e independente. Solicitações e eventos de conclusão, falha, cancelamento ou expiração permitem estudar prazos, pendências e qualidade dos dados.
 
-Uma operação desse tipo pode precisar acompanhar solicitações pendentes, prazos e falhas por canal. É uma hipótese de uso para demonstrar engenharia de dados. Não foi validada como demanda interna da Soluti. Não usamos logotipo, dados, APIs privadas, documentação interna nem alegamos parceria.
+O cenário propõe acompanhar solicitações pendentes, prazos e falhas por canal. Todos os eventos são gerados localmente, e os indicadores servem para demonstrar modelagem, rastreabilidade e processamento reproduzível.
 
-O projeto também não afirma reproduzir a arquitetura da empresa ou todos os requisitos de uma vaga. Seu foco é apresentar decisões técnicas verificáveis em um domínio pertinente.
+O foco é apresentar decisões técnicas verificáveis. O modelo, as categorias e os limites de atendimento são escolhas do próprio projeto, sem representar a arquitetura, os produtos ou os compromissos de um fornecedor.
 
 ## Por que dados sintéticos?
 

@@ -1,5 +1,5 @@
 # Deliberately stricter than the synthetic scenario. Expected to FAIL (exit 3).
-# These are teaching thresholds, not a Soluti SLA or a production policy.
+# These are teaching thresholds, not a service commitment or a production policy.
 [policy]
 version = 1
 dataset_kind = "synthetic"

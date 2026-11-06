@@ -28,7 +28,7 @@
 
 `python3 -m benchmarks.run --workflows 10000 --trials 3` mede ingestão e relatório em três warehouses novos. Geração, rede, auditoria e exportação ficam fora do cronômetro. O resultado inclui versões, arquitetura, tempos e fingerprints. A igualdade dos fingerprints verifica os fatos reproduzidos, não implica igualdade de metadados de execução.
 
-O benchmark serve para detectar regressões locais. Não é um teste de carga distribuído, não estima demanda real e não autoriza alegações de economia ou capacidade de produção. A versão continua sendo batch local com SQLite, sem integração com a Soluti, sem dados pessoais e sem processamento criptográfico de documentos.
+O benchmark serve para detectar regressões locais. Não é um teste de carga distribuído, não estima demanda real e não autoriza alegações de economia ou capacidade de produção. A versão continua sendo batch local com SQLite, sem integração com serviços externos, sem dados pessoais e sem processamento criptográfico de documentos.
 
 ## Compatibilidade
 
